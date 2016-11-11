@@ -7,8 +7,17 @@
 //
 
 #import "RepoTableViewController.h"
+#import "RepoTableViewCell.h"
+
+#import "MBProgressHUD.h"
+#import "GithubRepo.h"
+#import "GithubRepoSearchSettings.h"
 
 @interface RepoTableViewController ()
+@property (nonatomic, strong) UISearchBar *searchBar;
+@property (nonatomic, strong) GithubRepo *gitHubUsers;
+@property (nonatomic, strong) GithubRepoSearchSettings *searchSettings;
+@property (nonatomic, strong) NSMutableArray *users;
 
 @end
 
@@ -17,11 +26,14 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    // Uncomment the following line to preserve selection between presentations.
-    // self.clearsSelectionOnViewWillAppear = NO;
-    
-    // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-    // self.navigationItem.rightBarButtonItem = self.editButtonItem;
+    self.users = [@[] mutableCopy];
+    self.searchSettings = [[GithubRepoSearchSettings alloc] init];
+
+    self.searchBar = [[UISearchBar alloc] init];
+    self.searchBar.delegate = self;
+    self.searchBar.placeholder = @"Search for repositories";
+    [self.searchBar sizeToFit];
+    self.navigationItem.titleView = self.searchBar;
 }
 
 - (void)didReceiveMemoryWarning {
@@ -32,58 +44,63 @@
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-#warning Incomplete implementation, return the number of sections
-    return 0;
+    return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-#warning Incomplete implementation, return the number of rows
-    return 0;
+    if (self.users){
+        NSLog(@"USERS_STARTEEE: %lu", (unsigned long)self.users.count);
+        return self.users.count;
+    } else {
+        return 0;
+    }
 }
 
-/*
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:<#@"reuseIdentifier"#> forIndexPath:indexPath];
+    RepoTableViewCell *repoCell = (RepoTableViewCell *)[tableView dequeueReusableCellWithIdentifier:@"repoCell" forIndexPath:indexPath];
     
-    // Configure the cell...
+    self.gitHubUsers = self.users[indexPath.row];
+    NSLog(@"USERS_FINAL: %@", self.gitHubUsers);
     
-    return cell;
+    repoCell.titleRepo.text = [NSString stringWithFormat:@"%@", self.gitHubUsers.name];
+    repoCell.descriptionRepo.text = [NSString stringWithFormat:@"%@", self.gitHubUsers.repoDescription];
+    
+    return repoCell;
 }
-*/
 
-/*
-// Override to support conditional editing of the table view.
-- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
-    // Return NO if you do not want the specified item to be editable.
+#pragma mark - Search bar
+
+- (void)doSearch {
+    [GithubRepo fetchRepos:self.searchSettings successCallback:^(NSArray *repos) {
+        for (GithubRepo *repo in repos) {
+            [self.users addObject:repo];
+            NSLog(@"%@", repo);
+        }
+        [MBProgressHUD hideHUDForView:self.view animated:YES];
+        [self.tableView reloadData];
+    }];
+}
+
+- (BOOL)searchBarShouldBeginEditing:(UISearchBar *)searchBar {
+    [self.searchBar setShowsCancelButton:YES animated:YES];
     return YES;
 }
-*/
 
-/*
-// Override to support editing the table view.
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (editingStyle == UITableViewCellEditingStyleDelete) {
-        // Delete the row from the data source
-        [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-    } else if (editingStyle == UITableViewCellEditingStyleInsert) {
-        // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-    }   
-}
-*/
-
-/*
-// Override to support rearranging the table view.
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-}
-*/
-
-/*
-// Override to support conditional rearranging of the table view.
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
-    // Return NO if you do not want the item to be re-orderable.
+- (BOOL)searchBarShouldEndEditing:(UISearchBar *)searchBar {
+    [self.searchBar setShowsCancelButton:NO animated:YES];
     return YES;
 }
-*/
+
+- (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar {
+    searchBar.text = @"";
+    [searchBar resignFirstResponder];
+}
+
+- (void) searchBarSearchButtonClicked:(UISearchBar *)searchBar {
+    self.searchSettings.searchString = searchBar.text;
+    [searchBar resignFirstResponder];
+    [self doSearch];
+}
 
 /*
 #pragma mark - Navigation

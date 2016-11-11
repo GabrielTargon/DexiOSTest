@@ -10,4 +10,7 @@
 
 @interface RepoTableViewCell : UITableViewCell
 
+@property (weak, nonatomic) IBOutlet UILabel *titleRepo;
+@property (weak, nonatomic) IBOutlet UILabel *descriptionRepo;
+
 @end

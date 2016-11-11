@@ -10,4 +10,8 @@
 
 @interface UsersTableViewCell : UITableViewCell
 
+@property (weak, nonatomic) IBOutlet UIImageView *imageUser;
+@property (weak, nonatomic) IBOutlet UILabel *nameUser;
+
+
 @end
